@@ -1,0 +1,927 @@
+- 👋 Hi, I’m @MostafaAbdelhameed
+- 👀 I’m interested in Data analysis and SQL 
+
+<!---
+MostafaAbdelhameed/MostafaAbdelhameed is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+You can click the Preview link to take a look at your changes.
+--->
+
+--Restore Company DB:
+--1.Display all the employees Data.
+select * from Employee
+
+--2.Display the employee First name, last name, Salary and Department number.
+select Fname, Lname, Salary, Dno from Employee
+
+--3.Display all the projects names, locations and the department which is responsible about it.
+select Pname, Plocation, Dnum from Project
+
+--4.If you know that the company policy is to pay an annual commission for each employee with specific percent equals 10% of his/her annual salary .Display each employee full name and his annual commission in an ANNUAL COMM column (alias).
+select Fname + ' ' + Lname as fullname , Salary * 12 * 0.1 as annual from Employee
+
+--5.Display the employees Id, name who earns more than 1000 LE monthly.
+select SSN , Fname from Employee where Salary > 1000 
+
+--6.Display the employees Id, name who earns more than 10000 LE annually.
+select SSN, Fname from Employee where salary * 12 > 10000
+
+--7.Display the names and salaries of the female employees 
+select Fname, Salary from Employee where Sex = 'F'
+
+--8.Display each department id, name which managed by a manager with id equals 968574.
+Select Dnum, Dname from Departments where MGRSSN = 968574
+
+--9.Dispaly the ids, names and locations of  the pojects which controled with department 10.
+Select Pname, Pnumber, Plocation from Project where Dnum = 10
+
+--------------------------------------------------------------------------------------------
+
+--1.Display the Department id, name and id and the name of its manager.
+select Dnum, Dname, MGRSSN, Fname
+from Employee e , Departments d
+where e.SSN = d.MGRSSN
+
+--2.Display the name of the departments and the name of the projects under its control.
+select Dname, Pname 
+from Departments d, Project P
+where d.Dnum = p.Dnum
+
+--3.Display the full data about all the dependence associated with the name of the employee they depend on him/her.
+select d.*, Fname as employeeName
+from Dependent d INNER JOIN Employee e
+ON d.ESSN = e.SSN
+
+--4.Display the Id, name and location of the projects in Cairo or Alex city.
+Select Pname, Pnumber, Plocation 
+from Project
+where City = 'Cairo' or City = 'Alex'
+
+--5.Display the Projects full data of the projects with a name starts with "a" letter.
+select * from Project
+where Pname like 'a%'
+
+--6.display all the employees in department 30 whose salary from 1000 to 2000 LE monthly
+select Fname as employeeNames 
+from Employee e, Departments d
+where e.Dno= d.Dnum and d.Dnum=30 and e.Salary between 1000 and 2000
+
+--7.Retrieve the names of all employees in department 10 who works more than or equal10 hours per week on "AL Rabwah" project.
+select Fname
+from Employee, Works_for, Project
+where Employee.SSN = Works_for.ESSn and Project.Pnumber = Works_for.Pno
+and Dno = 10 and Works_for.Hours >= 10 and Project.Pname = 'AL Rabwah'
+
+--8.Find the names of the employees who directly supervised with Kamel Mohamed.
+select e.Fname as emp 
+from Employee e, Employee s
+where s.SSN = e.Superssn and s.Fname='Kamel' and s.Lname='Mohamed'
+
+--9.Retrieve the names of all employees and the names of the projects they are working on, sorted by the project name.
+select Fname, Pname
+from Employee e, Works_for w, Project p
+where e.SSN = w.ESSn and w.Pno = p.Pnumber
+order by Pname
+
+--10.For each project located in Cairo City , find the project number, the controlling department name ,the department manager last name ,address and birthdate.
+select Pnumber, Dname, Lname , Bdate
+from Project p, Departments d, Employee e
+where p.Dnum = d.Dnum  
+and d.MGRSSN = e.SSN
+and p.city='Cairo'
+
+--11.Display All Data of the managers.
+select e.*
+from Employee e, Departments d
+where e.SSN = d.MGRSSN
+
+--12.Display All Employees data and the data of their dependents even if they have no dependents.
+select *
+from Employee left outer join Dependent
+on Employee.SSN= Dependent.ESSN
+
+--13.Insert your personal data to the employee table as a new employee in department number 30, SSN = 102672, Superssn = 112233, salary=3000.
+Insert into Employee
+values( 'Mostafa', 'abdelhameed', 102672,8/7/1999, 'cairo', 'F', 3000, 112233, 30)
+
+--14.Insert another employee with personal data your friend as new employee in department number 30, SSN = 102660, but don’t enter any value for salary or supervisor number to him.
+Insert into Employee( Fname, Lname, SSN, Bdate, Address, Sex, Dno)
+values( 'Ahmed', 'abdelhameed', 102660, 5/6/1999, 'Doki', 'F', 10)
+
+--15.Upgrade your salary by 20 % of its last value.
+update Employee
+set Salary = Salary + (0.2*Salary)
+where SSN= 102672
+
+--------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+
+--1.Display (Using Union Function)
+--a.The name and the gender of the dependence that's gender is Female and depending on Female Employee.
+--b. And the male dependence that depends on Male Employee.
+select d.Dependent_name, d.Sex
+from Dependent d, Employee e
+where e.SSN = d.ESSN and d.Sex= 'F' and e.Sex='F'
+union
+select d.Dependent_name, d.Sex
+from Dependent d, Employee e
+where e.SSN=d.ESSN and d.Sex='M' and e.sex='M'
+
+-----------------------------------------------------------------------------------
+
+--2.For each project, list the project name and the total hours per week (for all employees) spent on that project.
+select p.Pname [project Name] , sum(hours) as [Total hours per week]
+from Project p, Works_for w
+where p.Pnumber=w.Pno
+group by p.Pname
+--------------------------------------------------------------
+--3.Display the data of the department which has the smallest employee ID over all employees' ID.
+select d.*
+from Employee e, Departments d
+where e.Dno = d.Dnum and e.SSN = (select min(SSN) from Employee)
+--------------------------------------------------------------------------
+--4.For each department, retrieve the department name and the maximum, minimum and average salary of its employees.
+select d.Dname [Department Name], max(salary) [Max Salary], min(salary) [Min Salary],
+avg(salary) [Avg Salary]
+from Departments d, Employee e
+where d.Dnum = e.Dno
+group by d.Dname
+----------------------------------------------------------------------
+--5.List the full name of all managers who have no dependents.
+select Fname+ ''+ Lname as FullName
+from Employee e inner join Departments D 
+on e.SSN=D.MGRSSN 
+left join Dependent
+on e.SSN= Dependent.ESSN 
+where ESSN is null
+
+select Fname+ ''+ Lname as FullName
+from Employee e, Departments D
+where e.SSN=D.MGRSSN and MGRSSN not in ( select ESSN from Dependent )
+------------------------------------------------------------------------------
+--6.For each department-- if its average salary is less than the average salary of all employees-- display its number, name and number of its employees.
+select d.Dnum, d.Dname, count(e.SSN) [Count emps]
+from Departments d, Employee e
+where e.Dno=d.Dnum
+group by Dnum, Dname
+having avg(Salary) < (select avg(Salary) from Employee)
+---------------------------------------------------------------------
+--7.Retrieve a list of employees names and the projects names they are working on ordered by department number and within each department, ordered alphabetically by last name, first name.
+select Fname+' '+ Lname [Full Name] ,Pname
+from Employee e, Works_for w, Project p
+where e.SSN=w.ESSn and w.Pno=p.Pnumber
+order by Dno,Fname,Lname
+----------------------------------------------------------
+--8.Try to get the max 2 salaries using subquery.
+select max(Salary) [Max salary] from Employee
+union all
+select max(Salary) from Employee 
+where Salary not in (select max(Salary) from Employee)
+----------------------------------------------------------
+--9.Get the full name of employees that is similar to any dependent name.
+select Fname+' '+Lname [Full Name]
+from Employee 
+intersect
+select Dependent_name
+from Dependent
+
+select Fname+' '+Lname [Full Name]
+from Employee, Dependent
+where Employee.SSN = Dependent.ESSN and Fname = Dependent_name
+----------------------------------------------------------
+--10.Display the employee number and name if at least one of them have dependents (use exists keyword) self-study.
+select SSN, Fname
+from Employee where exists
+(select e.SSN from Employee e, Dependent d  
+where e.SSN=d.ESSN)
+----------------------------------------------------------
+--11.In the department table insert new department called "DEPT IT" , with id 100, employee with SSN = 112233 as a manager for this department. The start date for this manager is '1-11-2006'.
+insert into Departments
+values('DEPT_IT', 100, 112233,11/1/2006)
+----------------------------------------------------------
+--12.Do what is required if you know that : Mrs.Noha Mohamed(SSN=968574)  moved to be the manager of the new department (id = 100), and they give you(your SSN =102672) her position (Dept. 20 manager).
+--a.First try to update her record in the department table.
+--b.Update your record to be department 20 manager.
+--c.Update the data of employee number=102660 to be in your teamwork (he will be supervised by you) (your SSN =102672).
+update Departments set MGRSSN=968574 where Dnum=100
+update Departments set MGRSSN= 102672 where Dnum= 20
+update Employee set Superssn=102672 where SSN= 102660 
+----------------------------------------------------------
+--13.Unfortunately the company ended the contract with Mr. Kamel Mohamed (SSN=223344) so try to delete his data from your database in case you know that you will be temporarily in his position.
+--Hint: (Check if Mr. Kamel has dependents, works as a department manager, supervises any employees or works in any projects and handle these cases).
+delete Dependent where ESSN=223344
+delete Works_for where ESSn=223344
+update Employee set Superssn= 102672 where Superssn=223344
+update Departments set MGRSSN=102672 where MGRSSN=223344
+delete Employee where SSN=223344
+----------------------------------------------------------
+--14.Try to update all salaries of employees who work in Project ‘Al Rabwah’ by 30%.
+update Employee set Salary= (Salary*0.3) + Salary
+where SSN in (
+select Essn
+from Works_for w, Project p
+where w.Pno=p.Pnumber and p.Pname='Al Rabwah')
+
+----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+
+/*
+a.Create the following database using wizard Consists of 2 File Groups { SeconderyFG (has two data files) and ThirdFG (has two data files) } 
+
+Database Name: SD
+Location: (Default path)
+Initial size for mdf: 25MB
+File Group for mdf: Primary
+File Growth for mdf: 10%
+Max. File Size for mdf: 400	MB
+Log File Name: SD-Log
+Location for Log: (Default Path)
+Initial Size for Log: 15MB
+File Growth: 20%
+Log File Max Size: 400 MB
+*/
+
+--1.Create the following tables with all the required information and load the required data as specified in each table using insert statements[at least two rows].
+create table department
+(
+DeptNo varchar(3) primary key ,
+DeptName varchar(20),
+Location varchar(5)
+)
+insert into department values
+('d1','Research','NY'),('d2','Accounting','DS'),('d3','Markiting','KW')
+
+sp_addtype loc,'nchar(2)'
+create default def1 as 'NY'
+create rule rule1 as @r in ('NY','DS','KW')
+sp_bindrule rule1, loc
+sp_bindefault def1,loc
+
+alter table department alter column Location loc
+
+create table employee 
+(
+EmpNo int primary key,
+EmpFname varchar(20) not null,
+EmpLname varchar(20) not null,
+DeptNo varchar(3),
+Salary int ,
+constraint c1 foreign key(DeptNo) references department(DeptNo),
+constraint c2 unique(Salary),
+)
+create rule rule2 as @rr<6000
+sp_bindrule rule2, 'employee.Salary'
+
+--Testing Referential Integrity:
+--1.Add new employee with EmpNo =11111 In the works_on table [what will happen]
+insert into Works_on(EmpNo,ProjectNo)values(11111, 'p2') -- ERROR "conflicted with the FOREIGN KEY constraint"
+
+--2.Change the employee number 10102  to 11111  in the works on table [what will happen].
+update Works_on set EmpNo =11111 where EmpNo=10102  -- ERROR "conflicted with the FOREIGN KEY constraint"
+
+--3.Modify the employee number 10102 in the employee table to 22222. [what will happen].
+update employee set EmpNo=22222 where EmpNo=10102   -- ERROR "conflicted with the FOREIGN KEY constraint"
+
+--4.Delete the employee with id 10102.
+delete from employee where EmpNo=10102 -- ERROR "conflicted with the FOREIGN KEY constraint"
+delete from Works_on where EmpNo=10102
+delete from employee where EmpNo=10102
+
+--Table modification
+--1.Add TelephoneNumber column to the employee table[programmatically].
+alter table employee add TelephoneNumber int
+--2.drop this column[programmatically].
+alter table employee drop column TelephoneNumber
+--3.Bulid A diagram to show Relations between tables.
+----------------------------------------------------------------------------
+--2.Create the following schema and transfer the following tables to it. 
+--a.Company Schema.
+--i.Department table (Programmatically).
+--ii.Project table (using wizard).
+--b.Human Resource Schema.
+--i.Employee table (Programmatically).
+create schema Company
+alter schema Company transfer department
+
+create schema HumanResource
+alter schema HumanResource transfer employee 
+------------------------------------------------------------------------------
+--3.Write query to display the constraints for the Employee table.
+SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+WHERE TABLE_NAME='employee'
+
+--4.Create Synonym for table Employee as Emp and then run the following queries and describe the results.
+create synonym Emp for HumanResource.employee
+--a.Select * from Employee
+Select * from employee -- error "No Output"
+--b.Select * from [Human Resource].Employee
+Select * from HumanResource.employee
+--c.Select * from Emp
+Select * from Emp
+--d.Select * from [Human Resource].Emp
+Select * from HumanResource.Emp -- error "No Output"
+
+--5.Increase the budget of the project where the manager number is 10102 by 10%.
+update Company.Project
+set Budget+=(.1*Budget)
+from Company.Project p inner join works_on w
+on p.ProjectNo=w.ProjectNo
+where EmpNo=10102 and Job='Manger'
+
+--6.Change the name of the department for which the employee named James works.The new department name is Sales.
+update Company.department
+set DeptName='sales'
+from Company.department d inner join HumanResource.employee e
+on d.DeptNo=e.DeptNo
+where EmpFname='James'
+
+--7.Change the enter date for the projects for those employees who work in project p1 and belong to department ‘Sales’. The new date is 12.12.2007.
+update Works_on
+set enter_date='12/12/2007'
+from Company.department d,HumanResource.employee e,Works_on w
+where d.DeptNo=e.DeptNo and e.EmpNo=w.EmpNo and d.DeptName='sales' and ProjectNo='p1'
+
+--8.Delete the information in the works_on table for all employees who work for the department located in KW.
+delete from works_on
+where EmpNo in 
+(select EmpNo from HumanResource.employee e,Company.department d where d.DeptNo=e.DeptNo and d.Location='kw') 
+
+--9 (wizard)Try to Create Login Named(ITIStud) who can access Only student and Course tablesfrom ITI DB then allow him to select and insert data into tables and deny Delete and update .(Use ITI DB)
+
+-------------------------------------------------------------------------------------------------------------
+--Create Scalar function name GetEmployeeSupervisor Type: Scalar Description: Returns
+--the name of an employee's supervisor based on their SSN.
+ create or alter function GetEmployeeSupervisor1 (@ssn int)
+returns varchar(100)
+begin 
+   declare @sup_name varchar(100)
+   select @sup_name = S.Fname
+   from Employee E , Employee S
+   where E.Superssn = S.SSN and E.SSN = @ssn
+   return @sup_name 
+end 
+
+select dbo.getemployeesupervisor1 (512463)
+select * from Employee
+
+
+------------------------
+alter function get_supervisorname (@emplssn int)
+returns varchar(20)
+begin 
+	declare @super_name varchar(20)
+	select @super_name = s.Fname
+	from Employee E , Employee S
+	where E.Superssn = S.SSN and E.SSN = @emplssn
+	return @super_name
+end
+
+select dbo.get_supervisorname(112233)
+---------------------------------------------------------
+
+--2-	Create Inline Table-Valued Function GetHighSalaryEmployees
+--Description: Returns a table of employees with salaries higher than a specified amount.
+
+create function GetHighSalaryEmployees (@salary int)
+returns table
+as 
+return(
+select Employee.Fname , Employee.Salary
+from Employee 
+where Salary > @salary
+)
+
+select * from dbo.GetHighSalaryEmployees(10)
+
+
+
+------------------------------------
+
+--3-	Multi-Statement Table-Valued Function - GetProjectAverageHours Type:
+--Multi-Statement Description: Returns the average hoursworked
+--by employees on a specific project as a table.
+alter function GetProjectAverageHours (@proj_num int)
+returns @avg_hours table (avg_hrs int,proj_num varchar(20))
+as 
+begin
+insert into @avg_hours
+select  avg (Works_for.Hours) HRS , Works_for.Pno 
+from Works_for inner join Project
+on Works_for.Pno = Project.Pnumber and @proj_num = Project.Pnumber
+inner join Employee
+on Works_for.ESSn = Employee.SSN 
+group by Works_for.Pno 
+order by Pno
+return
+end
+select * from dbo.GetProjectAverageHours(100)
+
+
+-------------------------------------------------------
+
+--4-Create function with name GetTotalSalary 
+--Type: Scalar Function Description:
+--Calculates and returns the total salary of all employees in the specified department.
+create or alter function GetTotalSalary (@DID int)
+returns int
+begin
+	declare @sum_salary int
+	select @sum_salary = sum (Salary)from Employee where  Employee.Dno =@DID group by Dno
+	return @sum_salary
+end
+
+select dbo.GetTotalSalary(20)
+
+select  Dno , sum (salary)
+from Employee 
+where Dno =20
+group by  Dno
+
+------------------------------------------------
+----5-Create function with GetDepartmentManager
+--Type: Inline Table-Valued Function Description:
+--Returns the manager's name and details for a specific department.
+
+create function GetDepartmentManager (@DID int)
+returns table 
+as 
+return
+(
+select E.*
+from Employee E, Departments D
+where @DID = D.Dnum and MGRSSN = SSN 
+)
+
+select * from GetDepartmentManager(20)
+----------------------------------------------
+
+select E.*
+from Employee E, Departments D
+where  E.Dno = D.Dnum and MGRSSN = SSN
+
+select * from Departments
+
+	--------------------------------------
+	--
+--1.Table-Valued Function - Get Instructors with Null Evaluation:
+--This function returns a table containing the details
+--of instructors who have null evaluations for any course.
+
+create or alter function NullEValuate ()
+returns table
+as
+return
+(
+select Instructor.Ins_Name,Ins_Degree,Instructor.Ins_Id
+from Instructor , Ins_Course 
+where evaluation_int is null and Instructor.Ins_Id = Ins_Course.Ins_Id 
+)
+
+select * from dbo.NullEValuate ()
+
+select * from dbo.NullEValuate('null')
+
+
+select Instructor.Ins_Name,Ins_Degree,Instructor.Ins_Id
+from Instructor , Ins_Course 
+where evaluation_int is null and Instructor.Ins_Id = Ins_Course.Ins_Id 
+
+select * from Ins_Course
+
+
+---------------------------------------------------------
+--2.Table-Valued Function - Get Top Students: 
+--This function returns a table containing
+--the topstudents based on their average \grades.
+
+create or alter function top_students (@num int)
+returns table 
+as
+return
+(
+select top(@num)Stud_Course.St_Id as STT,  avg (Stud_Course.Grade) as avg_
+from Student , Stud_Course
+where Student.St_Id = Stud_Course.St_Id
+group by Stud_Course.St_Id
+order by avg_ desc
+)
+select * from dbo.top_students(8)
+----------------------------------------
+--3.	Table-Valued Function - Get Students without Courses: This function returns a table
+--containing details of students who are not registered for any course.
+
+create or alter function StudentsWithNoCrs ()
+returns table 
+as
+return
+(
+select * from
+(select student.* , Stud_Course.Crs_Id
+from Student left outer join stud_course
+on Stud_Course.St_Id = Student.St_Id
+) as new
+where new.Crs_Id is null
+)
+ 
+ select * from dbo.StudentsWithNoCrs()
+ select Student.*, Stud_Course.Crs_Id from Stud_Course right outer join Student on Stud_Course.St_Id = Student.St_Id 
+ ----------------------------
+select * from
+(select student.* , Stud_Course.Crs_Id
+from Student left outer join stud_course
+on Stud_Course.St_Id = Student.St_Id
+) as new
+where new.Crs_Id is null
+
+----------------------------------------------------------------------------------------------
+use ITI_new
+
+--1\. Identifying the Top Instructors by Average Evaluation Score:
+-- Use the "Ins_Course" table to calculate the average evaluation 
+--score for each instructor.
+-- Rank the instructors based on their average evaluation scores
+--and identify the top instructors with the highest scores.
+select * from Ins_Course
+alter table Ins_Course add evaluation_int int
+update Ins_Course set evaluation_int =100 where 
+evaluation='Good'
+update Ins_Course set evaluation_int =200 where 
+evaluation='VGood'
+update Ins_Course set evaluation_int =400 where 
+evaluation='Distinct'
+
+with cte 
+as
+(
+select Ins_Id , avg (evaluation_int) as avg_evln 
+from Ins_Course
+group by Ins_Id
+)
+select *, rank () over  ( ORDER by avg_evln desc ) as Rank_ from  cte
+
+
+--2. Identifying the Top Topics by the Number of Courses:
+-- Use the "Topic" and "Course" tables to count the number of 
+--courses available for each topic.
+-- Rank the topics based on the count of courses and identify the 
+--most popular topics with the highest number of courses.
+
+with cte as
+
+(
+select count (Crs_Name) as crs_count, t.Top_Id, Top_Name from Topic t, Course c where t.Top_Id = c.Top_Id
+group by t.Top_Id, Top_Name
+)
+
+ select * , dense_rank () over(order by crs_count desc) as crsnums from cte
+
+-- 3. Finding Students with the Highest Overall Grades:
+--* Use the "Stud_Course" table to calculate the total grades for 
+--each student across all courses.
+--* Rank the students based on their total grades and identify the 
+--students with the highest overall grades.
+
+with cte as (
+select   St_Fname+' '+St_Lname as student_name , sum (Grade) as ovr_grd
+from Student, Stud_Course where student.St_Id = Stud_Course.St_Id
+group by (St_Fname+' '+St_Lname )
+)
+select *, DENSE_RANK () over (order by ovr_grd desc ) as overall_grade from cte
+
+
+
+use Company_SD
+
+--1. Employee Ranking within Departments: Challenge: You want to rank 
+--employees within each department based on their salaries
+
+select *, DENSE_RANK() over (partition by dno order by salary desc)
+from Employee where dno is not null
+
+--2. Employee Ranking by Project Contributions: Challenge: You want to 
+--rank employees based on the number of hours they worked on each 
+--project.
+
+select Fname+' '+Lname as emp_name, Works_for.Hours , Pname , pnumber,
+DENSE_RANK() over (partition by pnumber order by  Works_for.Hours  desc) as emp_rank
+from Employee join Works_for on ESSn=SSN join Project on Pnumber=Pno
+
+--3. Project Ranking by Employee Contributions: Challenge: You want to 
+--rank projects based on the total number of hours worked on each 
+--project. 
+with cte as (
+select sum (works_for.hours) as hours_rank,
+Pname, 
+row_number () over ( order by sum (hours_rank) desc) as qww
+from Project  join Works_for on Pno=Pnumber
+group by Pname
+)
+select *, DENSE_RANK () over (partition by pnumber order by sum (hours_rank) desc) from  cte
+
+
+select Pname,works_for.hours, DENSE_RANK () over (partition by pnumber order by sum (works_for.hours) desc) as rnk
+from Project join Works_for on Pno=Pnumber
+group by Pname,works_for.hours,
+
+
+--4. Department Ranking by Project Count: Challenge: You want to rank 
+--departments based on the number of projects they have. 
+select Dname , count (Pnumber) as pcount,
+dense_rank () over ( order by count (Pnumber) desc) as rnk
+from Departments d join Project p
+on d.Dnum = p.Dnum
+group by Dname
+
+
+--5. Employee Age Ranking: Challenge: You want to rank employees based 
+--on their ages. 
+select *, year(getdate())- year(bdate) age, DENSE_RANK () over (order by (year(getdate())- year(bdate)) desc ) age_rank
+from Employee
+
+-------------------------------------------------------------------------------------
+
+--1-	Create a stored procedure to show the total number of students per department
+
+create or alter proc TolNumStd @Dno int , @TotlCount int output
+as
+select @TotlCount= count (St_Id) 
+from student
+where @dno = Student.Dept_Id
+
+declare @x int 
+execute TolNumStd 20 ,@x output
+select @x
+
+-------------------------------------
+--2-Create a trigger to prevent anyone from inserting a new record in the Department table.
+--Print a message for the user to tell him that “he can’t insert a new record in that table”
+
+create or alter trigger T1 
+on department 
+instead of insert
+as
+select 'you cant insert new record in that table' as Messege
+
+
+insert into department (dept_id) values (666)
+
+--------------------------------------------------------
+--3-Create a trigger on student table after insert to add Row in a Student
+--Audit table (Server User Name, Date, Note) where the note will 
+--be “username Insert New Row with Key=Id in table student”
+
+create table Audit_table449 (Server_usrname varchar(50),date_ date ,note varchar(100))
+
+create or alter trigger T2
+on student
+after insert 
+as
+declare @ID int
+select @id = St_Id from Student
+insert into Audit_table449(Server_usrname,date_, note)
+ values (SUSER_NAME() , GETDATE(),'Insert New Row with Key= '+ CAST (@ID as varchar(100))+' in table student')
+
+insert into student (St_Id) values (000988)
+select * from Audit_table449
+----------------------------------------------------------------
+--4-Create a stored procedure that will be used in case there is an old employee 
+--has left the project and a new one become instead of him
+.--The procedure should take 3 parameters (old Emp. SSN, new Emp. SSN and the project number)
+--and it will be used to update works_for table. (use exists)
+
+create or alter proc EMP_REPlACMENT(@new_ID int ,@old_ID int ,
+@project_no int) 
+as
+begin
+if exists (select * from Employee where Employee.SSn = @new_ID)
+	begin
+	update Works_for set ESSn=@new_ID where  ESSn = @old_ID and Pno = @project_no
+	end
+	end
+
+execute EMP_REPlACMENT 7788 , 968574 ,700  
+-------------------------------------------------------------------------
+--5-5-	Create an Audit table with the following structure(ProjectNo,UserName,ModifiedDate,Hours_Old,Hours_New)
+--This table will be used to audit the update trials on the Hours column (works_for table, Company DB)
+--Example: If a user updated the Hours column then the project number, the user name that made that update,
+--the date of the modification and the value of the old and the new Hours will be inserted into the Audit table
+--Note: This process will take place only if the user updated the Hours column
+
+create table audit_1 (ProjectNo int ,UserName varchar(100),ModifiedDate date ,Hours_Old int ,Hours_New int)
+
+create or alter trigger T3 
+on works_for
+after update
+as
+if update (hours)
+	begin
+	declare @old_hr int , @new_hr int , @pno int 
+	select @old_hr = (select hours from deleted)
+	select @new_hr = (select hours from inserted)
+	select @pno = (select pno from inserted)
+	insert into  audit_1 
+	values ( @pno ,SUSER_NAME(),getdate(),@old_hr ,@new_hr)
+	end
+
+update Works_for 
+set works_for.Hours = 105
+where ESSn =112233
+----------------------------------------------
+enable trigger  dbo.T3 on works_for
+--------------------------------------------------------------------------
+--6-Create a trigger that prevents users from altering any table in Company DB.
+create trigger T4
+on database
+after alter_table
+as
+select 'you cant alter here'
+rollback
+
+------------------------------------------------------------------------
+
+--1-create an index on column (Hiredate) that allow u to cluster the data 
+--in table Department,what will happen?
+
+create nonclustered index MGRdate
+on Departments ([MGRStart Date])
+
+select * from Departments where [MGRStart Date] is null
+
+
+-------------------------------------
+--2-create an inex that allows you to enter unique ages in the student table.
+use ITI_new
+create unique index uni_age
+on student (st_age)
+
+-----------------------------------------------
+--3- create a nonclustered index on column (dept_manager) that allows you to enter a unique 
+--instructor id in table department.
+
+create nonclustered index UNI_MGRID
+on department(Dept_manager)
+-----------------------------------------------------------------
+--1- calculate total salary for each department name along with the total salary.
+ DECLARE c1 CURSOR
+ for
+	 SELECT sum(Salary) , Dname from Employee e , Departments d 
+	 where e.Dno=d.Dnum
+	 group by Dname
+FOR READ ONLY
+DECLARE @id INT , @name VARCHAR(100)
+OPEN c1
+
+FETCH c1 INTO @id , @name
+WHILE @@fetch_status=0
+BEGIN 
+SELECT @id , @name
+FETCH c1 INTO @id , @name
+END
+CLOSE c1
+DEALLOCATE c1 
+
+-----------------------------------------------------------------------
+--2-update employee salaries based on department . description: update employee salaries by increasing
+--them by a certain percentage for a specific department.
+DECLARE c2 CURSOR
+FOR 
+  SELECT e.Salary
+  FROM Employee e where e.Dno=20
+FOR UPDATE
+DECLARE @sal float
+OPEN c2
+FETCH c2 INTO @sal
+WHILE @@fetch_status =0 
+BEGIN
+	
+UPDATE Employee 
+SET Salary= 1.2 * Salary  
+		
+FETCH c2 INTO @sal
+END
+CLOSE c2
+DEALLOCATE c2
+--------------------------------------------------------
+--3-caculate the average number of hours each employee has worked on projects
+--and display their names along with the calculated average hours.
+DECLARE c3 CURSOR
+ for
+	 SELECT avg(Hours),e.Fname from Project p,Works_for w,Employee e
+	 where p.Pnumber=w.Pno and w.ESSn=e.SSN group by e.Fname
+FOR READ ONLY
+DECLARE @avg INT , @ename VARCHAR(100)
+OPEN c3
+
+FETCH c3 INTO @avg , @ename
+WHILE @@fetch_status=0
+BEGIN 
+SELECT @avg , @ename
+FETCH c3 INTO @avg , @ename
+END
+CLOSE c3
+DEALLOCATE c3 
+-------------------------------------------------------------------------
+--4-in employee table check if gender = m add mr before emplyee name
+--else if gender = f add mrs before employee name then display all names.
+
+DECLARE c4 CURSOR
+FOR 
+  SELECT Fname,Sex
+  FROM Employee
+FOR UPDATE
+DECLARE @newName varchar(50) ,@sex varchar(2)
+OPEN c4
+FETCH c4 INTO @newName,@sex
+WHILE @@fetch_status =0 
+BEGIN
+	IF(@sex='m')
+		BEGIN 
+		   UPDATE Employee 
+		   SET Fname='Mr'+Fname
+		   WHERE CURRENT OF c4 
+		END
+    ELSE
+	begin
+	UPDATE Employee 
+	SET Fname='Ms'+Fname
+	WHERE CURRENT OF c4 
+    end
+	 FETCH c4 INTO @newName,@sex
+END
+CLOSE c4
+DEALLOCATE c4
+-------------------------------------------------------------
+
+create schema mostafa
+
+create view mostafa.V100 
+as 
+select * from Departments
+
+
+create proc mostafa.P100 
+as 
+select * from Project
+
+
+ create OR ALTER function mostafa.get_ (@ssn int )
+returns varchar(20)
+as
+begin
+DECLARE @name varchar(20) 
+select @name = y.Fname 
+from Employee x inner join Employee y
+on y.ssn = x.superssn
+where x.SSN = @ssn
+ return @name
+end
+
+
+
+
+grant select on mostafa.V100  to mo
+
+grant execute on mostafa.P100  to mo
+
+grant execute on mostafa.get_ to mo
+
+
+----------------------------------------------------------------------------------
+declare @docs xml =
+		'<book genre="VB" publicationdate="2010">      
+   <title>Writing VB Code</title>
+   <author>
+      <firstname>ITI</firstname>
+      <lastname>ITI</lastname>
+   </author>
+   <price>44.99</price>
+  </book>'
+
+declare @hdocs INT  -- 1 ,0 
+
+
+
+Exec sp_xml_preparedocument @hdocs output, @docs
+
+
+select * INTO NewTable1111
+FROM OPENXML (@hdocs, '//book')  --levels  XPATH Code
+WITH 
+      (genre varchar(20)  '@genre',
+	  publicationdate int '@publicationdate',
+	  title varchar(20) 'title',
+	  firstname varchar(20) 'author/firstname',
+	  lastname varchar(20) 'author/lastname',
+	  price decimal(10,2) 'price'
+	  )
+
+Exec sp_xml_removedocument @hdocs
+
+
+select * from NewTable1111
+
+
+-----------------------------------------------------
+
+
+
+
