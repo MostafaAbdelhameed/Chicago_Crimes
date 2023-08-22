@@ -1,0 +1,172 @@
+-- 👋 Hi, I’m @MostafaAbdelhameed
+-
+<!--
+--->
+--How many total crimes were reported in 2021?
+
+select year(crime_date)'year',count (community_id)'Total Crimes Reported' 
+from crimes
+where crime_date like '%2021%' 
+group by year(crime_date)
+
+---------------------------
+
+--What is the count of Homicides, Battery and Assaults reported?
+
+select crime_type , count(community_id) 'Total Number' 
+from crimes
+where crime_type in ('Homicide','Battery','Assault')
+group by crime_type
+
+----------------------------------
+--What are the top ten communities that had the most crimes reported? 
+--We will also add the current population to see if area density is also a factor.
+
+select * from (
+select name'community' , population , count (community_id) 'num of crimes'
+,Rank_ = row_number()over(order by count (community_id)desc )
+from crimes,areas
+where community_area_id = community_id
+group by name , population ) neew
+where Rank_ between 1 and 10
+
+---------------------------------------
+--What are the top ten communities that had the least amount of crimes reported? 
+--We will also add the current population to see if area density is also a factor.
+
+select * from (
+select name'community' , population , count (community_id) 'num of crimes'
+,Rank_ = row_number()over(order by count (community_id) )
+from crimes,areas
+where community_area_id = community_id
+group by name , population ) neew
+where Rank_ between 1 and 10
+
+-------------------------------------------------------
+--What month had the most crimes reported?
+select  * from ( 
+select MONTH(crime_date)'Month Number',count (community_id)'Number Of Crimes Reported',
+Rn= ROW_NUMBER()over(order by count(community_id)desc)
+from crimes
+group by MONTH(crime_date)
+)new
+where Rn= 1
+
+------------------------------------------------
+
+--What month had the most homicides and what was the average and median temperature?
+
+select * from (
+ select month(crime_date)'Month' ,count(community_id)'count of crimes' ,avg(temp_high)'avg_temp_high',avg(temp_low)'avg temp low'
+,( (avg(temp_high)+avg(temp_low))/2)'The Median', 
+RN = ROW_NUMBER()over(order by count(community_id)desc)
+from crimes , temps
+where crime_type = 'homicide' and month(date) = month(crime_date)
+group by month(crime_date) 
+) neww
+where Rn = 1
+
+-------------------------------------------
+
+--What day in month were most crimes committed?
+select * from (
+select day(crime_date)'day',count(community_id)'NumberOfCrimes',RN=row_number()over(order by count(community_id)desc)
+from crimes
+group by day(crime_date)
+)new
+where rn = 1
+---------------------------------------
+--What weekday were most crimes committed?
+
+select * from (
+select datename(WEEKDAY, [crime_date]) as "day" , count(crime_type) as "count" 
+,rn=ROW_NUMBER()over(order by count(crime_type)desc)
+from crimes 
+group by datename(WEEKDAY, [crime_date])
+)neww
+where rn = 1
+
+--------------------------------------------
+
+--What are the top ten city streets that have had the most reported crimes?
+
+select * from (
+select city_block , count(community_id)'NumberOfCrimes',
+RN=ROW_NUMBER()over(order by count(community_id)desc)
+from crimes
+group by city_block
+)neww
+where rn = 1
+
+-------------------------------------
+
+--What are the top ten city streets that have had the most homicides including ties?
+
+select top(10)with ties city_block  ,  count (community_id)'NumberOfCrimes'
+from crimes
+group by city_block
+order by count (community_id) desc
+
+--------------------------------------
+
+--What are the top ten city streets that have had the most burglaries?
+
+select top(10)with ties city_block  ,  count (community_id)'NumberOfCrimes'
+from crimes
+where crime_type ='burglary'
+group by city_block
+order by count (community_id) desc
+
+-----------------------------------
+
+--What is the number and types of reported crimes on Michigan Ave (The Rodeo Drive of the Midwest)?
+
+select count(community_id)as 'NumberOfCrimes',city_block
+from crimes c
+where  c.city_block = 'Michigan Ave'
+group by c.city_block 
+
+---------------------------------------------
+
+--What are the top 5 least reported crime, how many arrests were made and the percentage of arrests made?
+
+alter table crimes 
+alter column arrest float;
+
+select top 5 crime_type , count(crime_type) as "count" ,sum(arrest) as "arrests"
+ , sum(arrest)/count(crime_type)   as "percentage"   
+from crimes 
+group by crime_type 
+order by count asc
+
+-----------------------------------------
+--What is the summition of domestic violence crimes?
+
+select domestic,count(community_id)'summition'
+from crimes
+where domestic = 'True'
+group by domestic
+
+-----------------------------------------------
+
+--Display how many crimes were reported on a monthly basis in chronological order. 
+
+select DATENAME(month,crime_date)'MonthName',month(crime_date)'Month',count(community_id)'NumberOfCrimes'
+from crimes
+group by DATENAME(month,crime_date), month(crime_date)
+order by month(crime_date)
+
+---------------------------------------------
+
+--What are the top 10 most common locations for reported
+--crimes and their frequency depending on the season?
+
+with cte as ( select crime_date , crime_location 
+, case when [crime_date] between '2021-01-01' and '2021-04-01'  then '1' else null end as "winter"
+,case when [crime_date] between '2021-04-02' and '2021-12-31'  then '1' else null end as "summer"
+from crimes ) 
+select top 10 cte.crime_location ,count(cte.winter) as "winter" ,count(cte.summer) "summer" 
+,(count(cte.winter) +count(cte.summer)) as"total"
+from cte
+group by cte.crime_location 
+order by "total" desc
